@@ -3,7 +3,7 @@ Simple dot-enhanced event system for browsers and Node.js
 
 ## Add to your project
 ```javascript
-const events = require('dot-events');
+import events from 'dot-events'
 ```
 
 ## Usage
@@ -62,104 +62,38 @@ Triggering **state** will execute the callbacks for every event that has the fol
 
 And yes, you can totally do **state.super.duper.specific.thing.happened**
 
-## Examples
-### Prerequisites for the following complicated examples
+## Example 1
 ```javascript
-function ACTION(name) {
-  return (...args) => console.log(name, ':::', ...args);
+function eventHandler() {
+  console.log(name, ':::', ...args);
 }
 
-let ui_state  = {
-  loaded: true,
-  title: 'she is great',
-};
-```
-
-### 1. I'm too young to die
-```javascript
-events.on('ui.sidebar.title', ACTION('ui.sidebar.title'));
-events.trigger('ui.sidebar.title', ui_state);
+events.on('ui.sidebar.title', eventHandler);
+events.trigger('ui.sidebar.title', {oh: 'yeah'});
 
 // ### Result
-// ui.sidebar.title ::: {yes: true, she: "is great"}
+// ui.sidebar.title ::: {oh: 'yeah'}
 ```
 
-### 2. Hey, not too rough
+## All methods
 ```javascript
-events.on('ui.sidebar.title', ACTION('ui.sidebar.title'));
-// This will only happen once
-events.one('ui.sidebar.loaded', ACTION('ui.sidebar.loaded'));
-events.trigger('ui.sidebar', ui_state);
-console.log('===');
-events.trigger('ui.sidebar', ui_state);
+function eventHandler() {
+  console.log(name, ':::', ...args);
+}
 
-// ### Result
-// ui.sidebar.title ::: {loaded: true, title: "she is great"}
-// ui.sidebar.loaded ::: {loaded: true, title: "she is great"}
-// ===
-// ui.sidebar.title ::: {loaded: true, title: "she is great"}
+events.on('ui.sidebar.title', eventHandler);         // Returns Boolean
+events.one('ui.sidebar.title', eventHandler);        // Returns Boolean
+events.off('ui.sidebar.title', eventHandler);        // Returns Boolean
+events.find('ui.sidebar.title');                     // Returns String[]
+events.trigger('ui.sidebar.title', {some: 'data'});  // Returns Boolean
+events.replace('ui.sidebar.title', newEventHandler); // Returns Boolean
 ```
 
-### 3. Hurt me plenty
+## Also has a couple of getters
 ```javascript
-events.on('ui', ACTION('ui'));
-events.on('ui.sidebar', ACTION('ui.sidebar'));
-events.on('ui.sidebar.title', ACTION('ui.sidebar.title'));
-// This will only happen once
-events.one('ui.sidebar.loaded', ACTION('ui.sidebar.loaded'));
-events.trigger('ui', ui_state);
-console.log('===');
-events.trigger('ui', ui_state);
-
-// ### Result
-// ui.sidebar.title ::: {loaded: true, title: "she is great"}
-// ui.sidebar.loaded ::: {loaded: true, title: "she is great"}
-// ui.sidebar ::: {loaded: true, title: "she is great"}
-// ui ::: {loaded: true, title: "she is great"}
-// ===
-// ui.sidebar.title ::: {loaded: true, title: "she is great"}
-// ui.sidebar ::: {loaded: true, title: "she is great"}
-// ui ::: {loaded: true, title: "she is great"}
-```
-
-### 4. Nightmare!
-```javascript
-events.on('ui', ACTION('ui'));
-events.on('calls', ACTION('calls'));
-
-const ONE_BIG_STATE = {
-  oh: 'yeah',
-  yes: false,
-};
-events.trigger('ui', ONE_BIG_STATE);
-ONE_BIG_STATE.yes = true;
-console.log('===');
-events.trigger('ui calls', ONE_BIG_STATE);
-
-// ### Result
-// ui ::: {oh: "yeah", yes: false}
-// ===
-// ui ::: {oh: "yeah", yes: true}
-// calls ::: {oh: "yeah", yes: true}
+events.names   // Returns String[]
+events.ordered // Returns String[]
 ```
 
 ## Execution order
 Each event brach is being executed starting from its deepest members
-
-## Emiting multiple events with a single trigger
-As shown in example 4, we can trigger as many **unique** event names as we want passing along the same data which is often helpful. You're free to chop your events, triggers and data as you wish.
-
-### Here's how
-```javascript
-events.trigger('eventOne eventTwo', {some: 'common data');
-```
-
-### What about stupid scenarios?
-```javascript
-events.trigger('eventOne eventTwo eventOne eventOne eventOne', {some: 'common data');
-```
-
-Dupes are being filtered out. Only unique strings string-chops are being considered and no event is being executed twice.
-
-## There's more to talk about
-...but time is scarce
