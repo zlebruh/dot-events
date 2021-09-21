@@ -1,26 +1,19 @@
 class Eve {
-  /**
-   * @param {object} params
-   */
-  constructor(params = null) {
-    /**
-     * @property {boolean} Eve#once
-     * @property {function} Eve#callback
-     */
-    Object.defineProperties(this, {
-      once: { value: params.once },
-      callback: {
-        value: (...args) => {
-          if (this.toDestroy === true) return false;
+  constructor({ once, callback }) {
+    const CALLBACK = (name, ...args) => {
+      if (this.toDestroy === true) return false;
 
-          args.shift();
-          if (params.once === true) {
-            Object.defineProperty(this, 'toDestroy', { value: true });
-          }
-          return params.callback.apply(null, args);
-        },
-      },
-    });
+      if (once === true) {
+        Object.defineProperty(this, 'toDestroy', { value: true })
+      }
+
+      return callback.apply(null, args)
+    }
+
+    Object.defineProperties(this, {
+      once: { value: once },
+      callback: { value: CALLBACK }
+    })
   }
 }
 
@@ -47,7 +40,7 @@ const ADD_EVENT = (...args) => {
     const name = CLEANER(path)
 
     if (has(name)) {
-      console.log(prefix, `There is already an event '${name}'. Use the 'replace' method instead.`);
+      console.log(prefix, `There is already an event '${name}'. Use the 'replace' method instead.`)
       return false;
     }
     const OK = VALID(name) && typeof callback === 'function'
@@ -56,7 +49,7 @@ const ADD_EVENT = (...args) => {
 
     return OK
   } catch (err) {
-    console.log(prefix, err.message);
+    console.log(prefix, err.message)
     return false;
   }
 }
@@ -107,7 +100,7 @@ export const replace = (path, callback) => {
     return ADD_EVENT(name, callback, once)
   }
 
-  console.log(prefix, `There is no task with name: "${path}"`);
+  console.log(prefix, `There is no task with name: "${path}"`)
   return false
 }
 
