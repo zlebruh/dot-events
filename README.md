@@ -18,7 +18,7 @@ events.trigger('message', 'What happen?')
 ```
 
 ## Expected usage: the *dot-natiotion*
-### Notice how calling the root "ui" caused the whole `ui.something.something` tree to execute
+Notice how calling the root "ui" caused the whole `ui.something.something` tree to execute
 ```javascript
 events.on('ui', ACTION('ui'))
 events.on('ui.sidebar', ACTION('ui.sidebar'))

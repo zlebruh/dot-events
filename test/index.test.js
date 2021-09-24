@@ -2,13 +2,35 @@ import events from '../src/index'
 
 const CB = () => { }
 
-describe('Event system - methods', () => {
-  test('Ensure all methods and getters exist', () => {
-    const methods = ['on', 'one', 'off', 'find', 'trigger', 'replace']
-    const getters = ['names', 'ordered']
+const METHODS = ['on', 'one', 'off', 'has', 'find', 'trigger', 'replace']
+const GETTERS = ['names', 'ordered']
 
-    methods.forEach(v => expect(typeof events[v]).toBe('function'))
-    getters.forEach(v => expect(Array.isArray(events[v])).toBe(true))
+const filterExported = (type, target = events) => {
+  const keys = Object.keys(target)
+  if (type === 'array') return keys.filter(v => Array.isArray(target[v]))
+  if (type === 'function') return keys.filter(v => typeof target[v] === type)
+  return keys
+}
+describe('Ensure only the expected methods and getters are exposed', () => {
+  test('Verify all methods exist and match exactly what is exposed', () => {
+    const keysLocal = [...METHODS].sort()
+    const keysExposed = filterExported('function').sort()
+    expect(keysLocal.length).toBe(keysExposed.length)
+    expect(keysLocal).toEqual(keysExposed)
+  })
+
+  test('Verify all getters exist and match exactly what is exposed', () => {
+    const keysLocal = [...GETTERS].sort()
+    const keysExposed = filterExported('array').sort()
+    expect(keysLocal.length).toBe(keysExposed.length)
+    expect(keysLocal).toEqual(keysExposed)
+  })
+
+  test('Verify the file expose only the select methods and getters and nothing else', () => {
+    const keysLocal = [...METHODS, ...GETTERS].sort()
+    const keysExposed = filterExported('all').sort()
+    expect(keysLocal.length).toBe(keysExposed.length)
+    expect(keysLocal).toEqual(keysExposed)
   })
 })
 
@@ -158,5 +180,58 @@ describe('Event system - Removing events', () => {
     // Actual test
     expect(events.off('*')).toBe(true)
     expect(events.names.length).toBe(0)
+  })
+})
+
+describe('Event system - verify the flow', () => {
+  test('Perform sanity', () => {
+    if (events.names.length) events.off('*')
+    expect(events.names.length).toBe(0)
+  })
+
+  test('Ensure adding, triggering, and removing deep trees work as expected ', () => {
+    const CB_MOCK = jest.fn()
+    events.one('aaa', CB_MOCK)
+    events.on('aaa.bbb', CB_MOCK)
+    events.on('aaa.bbb.ccc', CB_MOCK)
+    events.on('aaa.bbb.ccc.ddd', CB_MOCK)
+    events.one('aaa.bbb.ccc.ddd.eee', CB_MOCK)
+    events.on('aaa.bbb.ccc.ddd.eee.fff', CB_MOCK)
+    events.on('aaa.bbb.ccc.ddd.eee.fff.ggg', CB_MOCK)
+    expect(events.names.length).toBe(7)
+
+    events.trigger('aaa')
+    expect(CB_MOCK).toHaveBeenCalled()
+    expect(events.names.length).toBe(5)
+    events.off('aaa.bbb.ccc.ddd.eee', true) 
+    expect(events.names.length).toBe(3)
+
+    events.off('aaa.bbb.ccc', true) 
+    expect(events.names.length).toBe(1)
+
+    events.off('aaa.bbb', true) 
+    expect(events.names.length).toBe(0)
+  })
+})
+
+describe('Event system - Finding events', () => {
+  test('Perform sanity', () => {
+    if (events.names.length) events.off('*')
+    expect(events.names.length).toBe(0)
+  })
+
+  it('Set initial state', () => {
+    const CB_MOCK = jest.fn()
+    events.one('aaa', CB_MOCK)
+    events.on('aaa.bbb', CB_MOCK)
+    events.on('aaa.bbb.ccc', CB_MOCK)
+    expect(events.names.length).toBe(3)
+  })
+  it('get 1 item', () => expect(events.find('aaa.bbb.ccc').length).toBe(1))
+  it('get 2 items', () => expect(events.find('aaa.bbb').length).toBe(2))
+  it('get 3 items', () => expect(events.find('aaa').length).toBe(3))
+  it('get 0 items', () => {
+    events.off('*')
+    expect(events.find('aaa').length).toBe(0)
   })
 })

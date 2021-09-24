@@ -22,10 +22,8 @@ const prefix = '### Events:';
 const STORAGE = Object.create(null)
 const REGEX = /^[a-zA-Z0-9._]{1,}$/
 
+const ERR = msg => { console.log(prefix, msg); return false; }
 const VALID = path => path && REGEX.test(path)
-const NAMES = () => Object.keys(STORAGE)
-const ORDERED = () => Object.keys(STORAGE).sort().reverse()
-const has = path => path in STORAGE
 const CLEANER = path => path.split(/\./).filter(v => v).join('.')
 const PULL_TRIGGER = (key, args) => {
   const item = STORAGE[key]
@@ -39,18 +37,15 @@ const ADD_EVENT = (...args) => {
     const [path, callback, once = false] = args
     const name = CLEANER(path)
 
-    if (has(name)) {
-      console.log(prefix, `There is already an event '${name}'. Use the 'replace' method instead.`)
-      return false;
-    }
+    if (has(name)) return ERR(`There is already an event '${name}'. Use the 'replace' method instead.`)
+
     const OK = VALID(name) && typeof callback === 'function'
 
     if (OK) STORAGE[name] = new Eve({ name, callback, once })
 
     return OK
   } catch (err) {
-    console.log(prefix, err.message)
-    return false;
+    return ERR(err.message);
   }
 }
 const REMOVE_EVENT = path => path in STORAGE && delete STORAGE[path]
@@ -61,30 +56,29 @@ const REMOVE_EVENTS = list => {
 
 
 // ################ EXPORTED ################
-export const on = (path, callback) => ADD_EVENT(path, callback)
-export const one = (path, callback) => ADD_EVENT(path, callback, true)
+const on = (path, callback) => ADD_EVENT(path, callback)
+const one = (path, callback) => ADD_EVENT(path, callback, true)
 
-export const off = (path, includeChildren = false) => {
-  if (path === '*') return REMOVE_EVENTS(NAMES())
-
-  const found = find(path, includeChildren)
-  return REMOVE_EVENTS(found)
+const off = (path, includeChildren = false) => {
+  return path === '*'
+    ? REMOVE_EVENTS(names())
+    : REMOVE_EVENTS(find(path, includeChildren))
 }
 
-export const find = (path = '', includeChildren = true) => {
+const find = (path = '', includeChildren = true) => {
   if (!path.length) return []
   if (includeChildren === false && has(path)) return [path]
 
   const clean = CLEANER(path)
   const regex = new RegExp(`^${clean}\\b`)
 
-  return ORDERED().filter(v => includeChildren && v && regex.test(v))
+  return ordered().filter(v => includeChildren && v && regex.test(v))
 }
 
-export const trigger = (path, ...args) => {
-  if (!has(path)) return false
-
+const trigger = (path, ...args) => {
   const found = find(path)
+  if (!found.length) return false
+
   found.length > 1
     ? found.forEach(v => PULL_TRIGGER(v, args))
     : PULL_TRIGGER(path, args)
@@ -92,26 +86,22 @@ export const trigger = (path, ...args) => {
   return true
 }
 
-export const replace = (path, callback) => {
+const replace = (path, callback) => {
   const name = CLEANER(path)
-  if (has(name)) {
-    const { once } = STORAGE[name]
-    REMOVE_EVENT(name)
-    return ADD_EVENT(name, callback, once)
-  }
 
-  console.log(prefix, `There is no task with name: "${path}"`)
-  return false
+  if (!has(name)) return ERR(`There is no task with name: "${name}"`)
+
+  const { once } = STORAGE[name]
+  return REMOVE_EVENT(name) && ADD_EVENT(name, callback, once)
 }
 
-const regular = {
+const has = path => path in STORAGE
+const names = () => Object.keys(STORAGE)
+const ordered = () => Object.keys(STORAGE).sort().reverse()
+
+export default Object.freeze({
   on, one, off, has,
-  find, trigger, replace
-}
-
-export const exported = Object.defineProperties(regular, {
-  names: { get: NAMES },
-  ordered: { get: ORDERED },
+  find, trigger, replace,
+  get names() { return names() },
+  get ordered() { return ordered() },
 })
-
-export default Object.freeze(exported)
