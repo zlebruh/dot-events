@@ -1,12 +1,3 @@
-function VALID(path: String): Boolean;
-function NAMES(): String[];
-function ORDERED(): String[];
-function CLEANER(path: String): String;
-function PULL_TRIGGER(key: String, args: any[]): Boolean;
-function ADD_EVENT(path: String, callback: Function): Boolean;
-function REMOVE_EVENT(path): Boolean;
-function REMOVE_EVENTS(list): Boolean;
-
 export function on(path: String, callback: Function): Boolean;
 export function one(path: String, callback: Function): Boolean;
 export function off(path: String, includeChildren: Boolean): Boolean;
