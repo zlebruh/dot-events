@@ -76,14 +76,8 @@ const find = (path = '', includeChildren = true) => {
 }
 
 const trigger = (path, ...args) => {
-  const found = find(path)
-  if (!found.length) return false
-
-  found.length > 1
-    ? found.forEach(v => PULL_TRIGGER(v, args))
-    : PULL_TRIGGER(path, args)
-
-  return true
+  const found = find(path).map(v => PULL_TRIGGER(v, args))
+  return Boolean(found.length)
 }
 
 const replace = (path, callback) => {
