@@ -235,3 +235,25 @@ describe('Event system - Finding events', () => {
     expect(events.find('aaa').length).toBe(0)
   })
 })
+
+// TODO: Merge this with the original "triggering" section
+// ... but first make sure individual unit tests do not affect each other
+describe('Event system - Triggering root events', () => {
+  events.off('*')
+  test('Trigger root event and verify all children have been called', () => {
+    const CB_MOCK_1 = jest.fn()
+    const CB_MOCK_2 = jest.fn()
+    const CB_MOCK_3 = jest.fn()
+    const CB_MOCK_4 = jest.fn()
+    events.on('aaa.bbb.ccc.ddd.eee', CB_MOCK_1)
+    events.on('aaa.bbb.ccc.ddd', CB_MOCK_2)
+    events.on('aaa.bbb.ccc', CB_MOCK_3)
+    events.on('aaa.bbb', CB_MOCK_4)
+    
+    events.trigger('aaa')
+    expect(CB_MOCK_1).toHaveBeenCalled()
+    expect(CB_MOCK_2).toHaveBeenCalled()
+    expect(CB_MOCK_3).toHaveBeenCalled()
+    expect(CB_MOCK_4).toHaveBeenCalled()
+  })
+})
